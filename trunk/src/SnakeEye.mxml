@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml"
+						layout="absolute"
+						creationComplete="onCreationComplete();"
+						xmlns:local="*"
+						width="408" height="365"
+						minHeight="365" minWidth="408"
+						showStatusBar="false">
+	<mx:Script>
+		<![CDATA[
+			import flash.net.navigateToURL;
+			import mx.collections.ArrayCollection;
+		
+			import mx.containers.Canvas;
+
+			[Bindable]
+			[Embed(source="assets/help-browser.png")]
+			private var helpIcon:Class;
+		
+			[Bindable]
+			[Embed(source="assets/camera-video.png")]
+			private var cameraIcon:Class;
+		
+			private var camera:Camera;
+			private var timer:Timer;
+			private var lastActivityLevel:uint;
+			private var motionLevel:uint;
+			
+			private function onCreationComplete():void
+			{
+				// Manage window and application closing.
+				this.nativeWindow.addEventListener(Event.CLOSING,
+					function(e:Event):void
+					{
+						e.preventDefault();
+						for (var i:int = NativeApplication.nativeApplication.openedWindows.length - 1; i >= 0; --i)
+						{
+							NativeWindow(NativeApplication.nativeApplication.openedWindows[i]).close();
+						}
+					});
+	
+				// Center the application window.
+				var initialBounds:Rectangle = new Rectangle((Screen.mainScreen.bounds.width / 2 - 200), (Screen.mainScreen.bounds.height / 2 - 240), 400, 480);
+				this.nativeWindow.bounds = initialBounds;
+				
+				// Set up the HTML About viewer
+				this.htmlAbout.htmlLoader.window.nav = function(url:String):void {flash.net.navigateToURL(new URLRequest(url))};
+				
+				this.motionLevel = 20;
+				this.getCamera();
+				this.drawBullets();
+			}
+			
+			private function getCamera(cameraIndex:String = null):void
+			{
+				if (this.camera != null && cameraIndex == String(this.camera.index)) return;
+				if (this.camera != null && this.camera.hasEventListener(ActivityEvent.ACTIVITY))
+				{
+					this.camera.removeEventListener(ActivityEvent.ACTIVITY, onCameraActivity);
+					this.timer.stop();
+				}
+				this.camera = Camera.getCamera(cameraIndex);
+				if (this.camera == null)
+				{
+					this.cameraButton.label = "No cameras found";
+					return;
+				}
+				this.cameraButton.label = this.camera.name;
+				this.camera.setLoopback(false);
+				this.camera.setMode(400, 300, 30, false);
+				video.attachCamera(this.camera);
+				this.camera.addEventListener(ActivityEvent.ACTIVITY, onCameraActivity, false);
+			}
+			
+			private function onCameraActivity(e:ActivityEvent):void
+			{
+				if (e.activating)
+				{
+					this.timer = new Timer(100);
+					this.lastActivityLevel = 0;
+					this.timer.addEventListener(TimerEvent.TIMER, checkActivityLevel);
+					this.timer.start();
+				}
+			}
+			
+			private function drawBullets():void
+			{
+				this.bulletHolder.removeAllChildren();
+				for (var i:uint = 1; i <= 20; ++i)
+				{
+					var c:Canvas = new Canvas();
+					c.width = 10;
+					c.height = 10;
+					this.drawDot(c, (i == motionLevel) ? 0xFF0000 : 0x6699CC);
+		            c.graphics.drawCircle(10, 10, 10);
+		            c.graphics.endFill();
+
+					c.addEventListener(MouseEvent.MOUSE_OVER,
+						function(e:MouseEvent):void
+						{
+							Canvas(e.target).setStyle("borderStyle", "solid");
+						});
+
+					c.addEventListener(MouseEvent.MOUSE_OUT,
+						function(e:MouseEvent):void
+						{
+							Canvas(e.target).setStyle("borderStyle", "none");
+						});
+
+					c.addEventListener(MouseEvent.CLICK,
+						function(e:MouseEvent):void
+						{
+							var clickCanvas:Canvas = e.target as Canvas;
+							drawDot(bulletHolder.getChildAt(motionLevel - 1) as Canvas, 0x6699CC);
+							motionLevel = bulletHolder.getChildIndex(clickCanvas) + 1;
+							dispatchEvent(new Event(Event.CHANGE));
+							drawDot(clickCanvas, 0xFF0000);
+						});
+					c.setStyle("borderColor", 0xFF0000);
+					c.setStyle("borderStyle", "none");
+					this.bulletHolder.addChild(c);
+				}
+			}
+
+			private function drawDot(c:Canvas, color:uint):void
+			{
+				c.graphics.clear();
+				c.graphics.beginFill(color);
+	            c.graphics.drawCircle(5, 5, 5);
+	            c.graphics.endFill();
+			}
+			
+			private function updateActivityLevel(al:uint):void
+			{
+				var dotNum:uint = Math.round(al / 5);
+				var bullets:Array = this.bulletHolder.getChildren();
+				for (var i:uint = 0; i < bullets.length; ++i)
+				{
+					var c:Canvas = bullets[i] as Canvas;
+					if (i <= dotNum)
+					{
+						c.alpha = 1;
+					}
+					else
+					{
+						c.alpha = .25;
+					}
+					
+					if (dotNum >= this.motionLevel)
+					{
+						this.notify();
+					}
+				}
+			}
+			
+			private function checkActivityLevel(e:TimerEvent):void
+			{
+				if (this.camera.activityLevel != this.lastActivityLevel)
+				{
+					this.updateActivityLevel(this.camera.activityLevel);
+					this.lastActivityLevel = this.camera.activityLevel;
+				}
+			}
+			
+			private function notify():void
+			{
+				if (this.nativeWindow.displayState == NativeWindowDisplayState.MINIMIZED)
+				{
+					this.nativeWindow.restore();
+					this.nativeWindow.activate();
+				}
+			}
+
+			private function openCameraDrawer():void
+			{
+				var cameraNameArray:Array = Camera.names;
+				if (cameraNameArray.length == 0)
+				{
+					this.cameraViewStack.selectedChild = noCamerasFound;
+				}
+				else
+				{
+					this.cameraViewStack.selectedChild = camerasFound;
+					var cameraNames:ArrayCollection = new ArrayCollection(cameraNameArray);
+					cameraList.dataProvider = cameraNames;
+					for (var i:uint = 0; i < cameraNameArray.length; ++i)
+					{
+						if (cameraNameArray[i] == this.camera.name)
+						{
+							this.cameraList.selectedIndex = i;
+						}
+					}
+				}
+				cameraDrawer.open();
+			}
+
+			private function useNewCamera():void
+			{
+				this.getCamera(String(cameraList.selectedIndex));
+				cameraDrawer.close();
+			}
+
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%" height="100%" paddingTop="4" paddingLeft="4" paddingBottom="4" paddingRight="4">
+		<mx:HBox width="100%">
+			<mx:Button id="aboutButton" label="About SnakeEye" width="50%" icon="{helpIcon}" toolTip="About SnakeEye" click="aboutDrawer.open();"/>
+			<mx:Button id="cameraButton" width="50%" icon="{cameraIcon}" click="openCameraDrawer();" toolTip="Pick a camera"/>
+		</mx:HBox>
+		<mx:VideoDisplay id="video" width="400" height="300"/>
+		<mx:HBox width="100%" height="20" id="bulletHolder" verticalAlign="middle" horizontalAlign="center"/>
+	</mx:VBox>
+	<local:TopDrawer width="350" height="100" id="cameraDrawer">
+		<mx:ViewStack id="cameraViewStack" width="100%" height="100%">
+			<mx:Canvas id="camerasFound" width="100%" height="100%">
+				<mx:VBox width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+					<mx:ComboBox id="cameraList"/>
+					<mx:HBox width="100%" horizontalAlign="center">
+						<mx:Button label="Cancel" click="cameraDrawer.close();"/>
+						<mx:Button id="useCameraButton" label="Use This Camera" click="useNewCamera();"/>
+					</mx:HBox>
+				</mx:VBox>
+			</mx:Canvas>
+			<mx:Canvas id="noCamerasFound" width="100%" height="100%">
+				<mx:VBox width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+					<mx:Label text="No cameras found." fontWeight="bold"/>
+					<mx:Label text="Please connect a camera and try again."/>
+					<mx:Button label="Close" click="cameraDrawer.close();"/>
+				</mx:VBox>
+			</mx:Canvas>
+		</mx:ViewStack>
+	</local:TopDrawer>
+	<local:TopDrawer id="aboutDrawer" width="350" height="300">
+		<mx:VBox width="100%" height="100%" horizontalAlign="center" paddingBottom="4">
+			<mx:HTML id="htmlAbout" width="100%" height="100%" location="info.html" paintsDefaultBackground="false" backgroundAlpha="0"/>
+			<mx:HRule width="100%"/>
+			<mx:Button label="Close" click="aboutDrawer.close();"/>
+		</mx:VBox>
+	</local:TopDrawer>
+</mx:WindowedApplication>

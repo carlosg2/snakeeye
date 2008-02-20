@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="http://ns.adobe.com/air/application/1.0">
+
+	<id>com.adobe.snakeeye</id>
+	<filename>SnakeEye</filename>
+	<name>SnakeEye</name>
+	<version>v1</version>
+	<description>SnakeEye monitors a subject with your webcam, and alerts you when there is movement. Written by Christian Cantrell.</description>
+	<copyright>Copyright © 2007 Adobe Systems Incorporated. All rights reserved.</copyright>
+
+	<!-- Settings for the application's initial window. Required. -->
+	<initialWindow>
+		<content>[This value will be overwritten by Flex Builder in the output app.xml]</content>
+		<title>SnakeEye</title>
+		<systemChrome>standard</systemChrome>
+		<transparent>false</transparent>
+		<visible>false</visible>
+		<minimizable>true</minimizable>
+		<maximizable>false</maximizable>
+		<resizable>false</resizable>
+		<!--
+		<width></width>
+		<height></height>
+		-->
+		<!-- <x></x> -->
+		<!-- <y></y> -->
+	</initialWindow>
+
+	<!-- The subpath of the standard default installation location to use. Optional. -->
+	<installFolder>AIR Examples</installFolder>
+
+	<!-- The subpath of the Windows Start/Programs menu to use. Optional. -->
+	<programMenuFolder>AIR Examples</programMenuFolder>
+
+	<!-- The icon the system uses for the application. For at least one resolution,
+		 specify the path to a PNG file included in the AIR package. Optional. -->
+	<icon>
+		<image128x128>assets/AIRApp_128.png</image128x128>
+	</icon>
+
+</application>
