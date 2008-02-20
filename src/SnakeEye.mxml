@@ -28,18 +28,7 @@
 			private var so:SharedObject;
 			
 			private function onCreationComplete():void
-			{
-				// Manage window and application closing.
-				this.nativeWindow.addEventListener(Event.CLOSING,
-					function(e:Event):void
-					{
-						e.preventDefault();
-						for (var i:int = NativeApplication.nativeApplication.openedWindows.length - 1; i >= 0; --i)
-						{
-							NativeWindow(NativeApplication.nativeApplication.openedWindows[i]).close();
-						}
-					});
-	
+			{	
 				// Center the application window.
 				var initialBounds:Rectangle = new Rectangle((Screen.mainScreen.bounds.width / 2 - 200), (Screen.mainScreen.bounds.height / 2 - 240), 400, 480);
 				this.nativeWindow.bounds = initialBounds;
@@ -50,6 +39,13 @@
 				// Get persistant values
 				this.so = SharedObject.getLocal("com.adobe.snakeeye");
 				this.motionLevel = (so.data.motionLevel != null) ? so.data.motionLevel : 20;
+				
+				// Listen for window state changes
+				this.nativeApplication.addEventListener(Event.ACTIVATE,
+					function(e:Event):void
+					{
+						nativeWindow.alwaysInFront = false;
+					});
 
 				this.getCamera();
 				this.drawBullets();
@@ -172,8 +168,8 @@
 			{
 				if (this.nativeWindow.displayState == NativeWindowDisplayState.MINIMIZED)
 				{
+					this.nativeWindow.alwaysInFront = true;
 					this.nativeWindow.restore();
-					this.nativeWindow.orderToFront();
 				}
 			}
 
