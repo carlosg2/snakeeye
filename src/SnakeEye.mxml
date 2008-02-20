@@ -25,6 +25,7 @@
 			private var timer:Timer;
 			private var lastActivityLevel:uint;
 			private var motionLevel:uint;
+			private var so:SharedObject;
 			
 			private function onCreationComplete():void
 			{
@@ -46,7 +47,10 @@
 				// Set up the HTML About viewer
 				this.htmlAbout.htmlLoader.window.nav = function(url:String):void {flash.net.navigateToURL(new URLRequest(url))};
 				
-				this.motionLevel = 20;
+				// Get persistant values
+				this.so = SharedObject.getLocal("com.adobe.snakeeye");
+				this.motionLevel = (so.data.motionLevel != null) ? so.data.motionLevel : 20;
+
 				this.getCamera();
 				this.drawBullets();
 			}
@@ -113,6 +117,8 @@
 							var clickCanvas:Canvas = e.target as Canvas;
 							drawDot(bulletHolder.getChildAt(motionLevel - 1) as Canvas, 0x6699CC);
 							motionLevel = bulletHolder.getChildIndex(clickCanvas) + 1;
+							so.data.motionLevel = motionLevel;
+							so.flush();
 							dispatchEvent(new Event(Event.CHANGE));
 							drawDot(clickCanvas, 0xFF0000);
 						});
@@ -167,7 +173,7 @@
 				if (this.nativeWindow.displayState == NativeWindowDisplayState.MINIMIZED)
 				{
 					this.nativeWindow.restore();
-					this.nativeWindow.activate();
+					this.nativeWindow.orderToFront();
 				}
 			}
 
