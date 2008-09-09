@@ -30,7 +30,7 @@
 			private function onCreationComplete():void
 			{	
 				// Center the application window.
-				var initialBounds:Rectangle = new Rectangle((Screen.mainScreen.bounds.width / 2 - 200), (Screen.mainScreen.bounds.height / 2 - 240), 400, 480);
+				var initialBounds:Rectangle = new Rectangle((Screen.mainScreen.bounds.width / 2 - 200), (Screen.mainScreen.bounds.height / 2 - 240), 408, 365);
 				this.nativeWindow.bounds = initialBounds;
 				
 				// Set up the HTML About viewer
