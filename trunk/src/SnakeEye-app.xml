@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<application xmlns="http://ns.adobe.com/air/application/1.0">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<application xmlns="http://ns.adobe.com/air/application/1.5">
 
-	<id>com.adobe.snakeeye</id>
+	<id>SnakeEye</id>
 	<filename>SnakeEye</filename>
 	<name>SnakeEye</name>
 	<version>v1</version>
